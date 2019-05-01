@@ -1,0 +1,9 @@
+{
+  "expoServerPort": 19000,
+  "expoServerNgrokUrl": "https://em-3u9.claristhagerins.cao.exp.direct",
+  "packagerNgrokUrl": "https://packager.em-3u9.claristhagerins.cao.exp.direct",
+  "ngrokPid": 12336,
+  "devToolsPort": 19002,
+  "packagerPort": null,
+  "packagerPid": null
+}

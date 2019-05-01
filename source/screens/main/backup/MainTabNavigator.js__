@@ -1,0 +1,50 @@
+import React from 'react';
+import { Icon } from 'native-base';
+import { createStackNavigator, createBottomTabNavigator } from 'react-navigation';
+import { createMaterialBottomTabNavigator } from 'react-navigation-material-bottom-tabs';
+// import TabBarIcon from '../main/TabBarIcon';
+import Events from './Events';
+import Schedule from './Schedule';
+import Contacts from './Contacts';
+import Settings from './Settings';
+
+export default createMaterialBottomTabNavigator({
+  Events: {
+    screen: Events,
+    navigationOptions: {
+      tabBarLabel: 'Events',
+      tabBarIcon: ({tintColor})=>(
+        <Icon name="ios-paper" color={tintColor} size={24} />
+      )
+    }
+  },
+  Schedule: {
+    screen: Schedule,
+    navigationOptions: {
+      tabBarLabel: 'Schedule',
+      tabBarIcon: ({tintColor})=>(
+        <Icon name="ios-calendar" color={tintColor} size={24} />
+      )
+    }
+  },
+  Contacts: {
+    screen: Contacts,
+    navigationOptions: {
+      tabBarLabel: 'Contacts',
+      tabBarIcon: ({tintColor})=>(
+        <Icon name="ios-contacts" color={tintColor} size={24} />
+      )
+    }
+  },
+  Settings: {
+    screen: Settings,
+    navigationOptions: {
+      tabBarLabel: 'Settings',
+      tabBarIcon: ({tintColor})=>(
+        <Icon name="ios-settings" color={tintColor} size={24} />
+      )
+    }
+  },
+},{
+  initialRouteName: 'Events'
+})
