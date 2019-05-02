@@ -893,8 +893,8 @@ export default class NewEvent extends React.Component {
           </Form>
         </View>
 
-        <View style={{ paddingTop: 15, alignContent: 'flex-end' }}><Text style={{ color: '#8e8e8e' }}>*Minimum 2 options.</Text></View>
         <Button block style={{ marginTop: 10, justifyContent: 'center', backgroundColor: '#499fcd' }} onPress={() => this.handleAddNewChoice()}><Text style={{ fontWeight: 'bold' }}>Add New Choice</Text></Button>
+        <View style={{ paddingTop: 15, alignContent: 'flex-end' }}><Text style={{ color: '#8e8e8e' }}>*Minimum 2 options.</Text></View>
         {choice}
       </Container>;
 
@@ -1083,9 +1083,9 @@ export default class NewEvent extends React.Component {
                 </Text>
 
                     <View style={{ flexDirection: "row", flex: 3, marginTop: 5 }}>
-                      <Button info onPress={() => this.setState({ buttonPressed: 'date' })} style={{ flex: 3, marginLeft: 5, justifyContent: 'center', backgroundColor: '#499fcd' }}><Text style={styles.boldAndWhiteText}>Date/Time</Text></Button>
-                      <Button info onPress={() => this.setState({ buttonPressed: 'location' })} style={{ flex: 3, marginLeft: 5, justifyContent: 'center', backgroundColor: '#499fcd' }}><Text style={styles.boldAndWhiteText}>Location</Text></Button>
-                      <Button info onPress={() => this.setState({ buttonPressed: 'text' })} style={{ flex: 3, marginLeft: 5, marginRight: 5, justifyContent: 'center', backgroundColor: '#499fcd' }}><Text style={styles.boldAndWhiteText}>Text</Text></Button>
+                      <Button info onPress={() => this.setState({ buttonPressed: 'date' })} style={{ flex: 3, marginLeft: 5, justifyContent: 'center', backgroundColor: '#499fcd', borderRadius: 10 }}><Text style={styles.boldAndWhiteText}>DATE</Text></Button>
+                      <Button info onPress={() => this.setState({ buttonPressed: 'location' })} style={{ flex: 3, marginLeft: 5, justifyContent: 'center', backgroundColor: '#499fcd', borderRadius: 10 }}><Text style={styles.boldAndWhiteText}>LOCATION</Text></Button>
+                      <Button info onPress={() => this.setState({ buttonPressed: 'text' })} style={{ flex: 3, marginLeft: 5, marginRight: 5, justifyContent: 'center', backgroundColor: '#499fcd', borderRadius: 10 }}><Text style={styles.boldAndWhiteText}>TEXT</Text></Button>
                     </View>
 
                     {eventForm}

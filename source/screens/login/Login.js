@@ -78,14 +78,21 @@ export default class Login extends React.Component {
         }
     }
 
-    async _setAsyncStorage(uID, uName, mail, role) {        
+    async _setAsyncStorage(uID, uName, mail, role) {
+        var evtID = 'fromlogin';
         await AsyncStorage.clear();
         await AsyncStorage.setItem('userId',uID);
         await AsyncStorage.setItem('userName', uName);
         await AsyncStorage.setItem('email', mail);
         await AsyncStorage.setItem('role', role);
+        // await AsyncStorage.setItem('eventID', evtID);
 
-        console.log(uID + " " + uName + " " + mail + " " + role);
+        // console.log(uID + " " + uName + " " + mail + " " + role);
+        console.log("User ID   : " + uID);
+        console.log("User Name : " + uName);
+        console.log("Email     : " + mail);
+        console.log("Role      : " + role);
+        // console.log("Event ID  : " + evtID);
     }
 
     render() {

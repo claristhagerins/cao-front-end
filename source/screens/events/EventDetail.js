@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  StyleSheet, BackHandler, AsyncStorage, TextInput, ListView, Linking, ScrollView,
+  StyleSheet, BackHandler, AsyncStorage, TextInput, ListView, Linking, ScrollView, Alert
 } from 'react-native';
 import {
   Container, Content, Text, Spinner, Header, Left, Body, Right, Button, Icon, Title,
@@ -15,7 +15,7 @@ const _format = 'YYYY-MM-DD'
 const _full_format = 'ddd, DD MMM YYYY'
 const _today = moment().format(_format)
 
-export default class EventDetail extends React.Component {
+export default class Vote extends React.Component {
   initialState = {
     [_today]: { disabled: true }
   }
@@ -37,7 +37,10 @@ export default class EventDetail extends React.Component {
     location: '',
     dateChoice: '',
     dateChoiceNormalFormat: '',
-    errorMessage: ''
+    errorMessage: '',
+    dateChecked: [],
+    locationChecked: [],
+    choiceChecked: []
   }
 
   static navigationOptions = {
@@ -111,7 +114,7 @@ export default class EventDetail extends React.Component {
     let eventDescription = detail[0].eventDescription;
     let dateCreated = detail[0].dateCreated;
     let createdBy = detail[0].createdBy;
-    let pollClosedDate = moment(detail[0].pollClosedDate, 'DD-MMM-YYYY').format('ddd, DD MMMM YYYY');
+    let pollClosedDate = moment(detail[0].pollClosedDate, 'dddd, LL HH:mm').format('dddd, LL HH:mm');
     let isMultiple = detail[0].isMultiple;
     let question = detail[0].question;
     let choices = detail[0].choices;
@@ -254,6 +257,278 @@ export default class EventDetail extends React.Component {
     })
   }
 
+  showEventDate() {
+    if (this.state.dateChoice.length != 0) {
+      return <View>
+        <List style={{ marginTop: 15, marginBottom: 10 }}>
+          <ListItem itemDivider style={{ backgroundColor: 'WHITE', justifyContent: 'center', alignContent: 'center', borderBottomWidth: 1.5, borderBottomColor: '#499fcd' }}>
+            <Text style={{ color: '#499fcd', fontWeight: 'bold' }}>EVENT DATE</Text>
+          </ListItem>
+        </List>
+        {/* <Calendar
+                // onDayPress={this.onDaySelect}
+                minDate={_today}
+                disabled={true}
+                hideExtraDays
+                horizontal={true}
+                marked={this.state.dateChoice.marked}
+              /> */}
+
+        <List
+          dataArray={this.state.dateChoice}
+          keyboardShouldPersistTaps='always'
+          style={{ marginTop: 0, marginBottom: 0 }}
+          renderRow={item => (
+            <ListItem style={{ flex: 7, flexDirection: 'row' }} onPress={() => this.checkDate(item, item.checked)}>
+              <CheckBox checked={item.checked} onPress={() => this.checkDate(item, item.checked)} />
+              <View style={{ flex: 6, flexDirection: 'column', marginLeft: 15 }}>
+                <Text style={{ width: '100%' }}>{item.eventDate}</Text>
+              </View>
+            </ListItem>
+          )}
+        />
+      </View>
+    } else {
+      return <Text> </Text>
+    }
+  }
+
+  showEventLocation() {
+    if (this.state.location.length != 0) {
+      return <View>
+        <List style={{ marginTop: 15, marginBottom: 10 }}>
+          <ListItem itemDivider style={{ backgroundColor: 'white', justifyContent: 'center', alignContent: 'center', borderBottomWidth: 1.5, borderBottomColor: '#499fcd' }}>
+            <Text style={{ color: '#499fcd', fontWeight: 'bold' }} >EVENT LOCATION</Text>
+          </ListItem>
+        </List>
+
+        <List
+          dataArray={this.state.location}
+          keyboardShouldPersistTaps='always'
+          style={{ marginTop: 0, marginBottom: 0 }}
+          renderRow={item => (
+            <ListItem style={{ flex: 7, flexDirection: 'row' }} onPress={() => this.checkLocation(item, item.checked)}>
+              <CheckBox checked={item.checked} onPress={() => this.checkLocation(item, item.checked)} />
+              <View style={{ flex: 6, flexDirection: 'column', marginLeft: 15 }}>
+                <Text style={{ width: '100%' }}>{item.locationName}</Text>
+                {this.checkContact(item.locationContact)}
+              </View>
+              {this.clickToCall(item.locationContact)}
+              <Button style={{ alignItems: 'flex-end' }} transparent onPress={() => this.navigate(item.locationName)}><Icon name="md-navigate" style={{ color: '#499fcd' }} /></Button>
+            </ListItem>
+          )}
+        />
+      </View>
+    } else {
+      return <Text> </Text>
+    }
+  }
+
+  showEventQuestion() {
+    if (this.state.choices.length != 0) {
+      return <View>
+        <List style={{ marginTop: 15, marginBottom: 10 }}>
+          <ListItem itemDivider style={{ backgroundColor: 'white', justifyContent: 'center', alignContent: 'center', borderBottomWidth: 1.5, borderBottomColor: '#499fcd' }}>
+            <Text style={{ color: '#499fcd', fontWeight: 'bold' }} >QUESTION</Text>
+          </ListItem>
+        </List>
+
+        <View style={{ justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 15 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 25 }}>{this.state.question}</Text>
+        </View>
+
+        <List
+          dataArray={this.state.choices}
+          keyboardShouldPersistTaps='always'
+          style={{ marginTop: 0, marginBottom: 0 }}
+          renderRow={item => (
+            <ListItem style={{ flex: 7, flexDirection: 'row' }} onPress={() => this.checkChoice(item, item.checked)}>
+              <CheckBox checked={item.checked} onPress={() => this.checkChoice(item, item.checked)} />
+              <Text style={{ width: '100%' }}>     {item.choice}</Text>
+            </ListItem>
+          )}
+        />
+      </View>
+    } else {
+      return <Text> </Text>
+    }
+  }
+
+  voteEvent() {
+    var errCount = 0;
+    var errDate = '';
+    var errLoc = '';
+    var errChc = '';
+
+
+    this.setState({ dateChecked: [] })
+    this.setState({ locationChecked: [] })
+    this.setState({ choiceChecked: [] })
+
+    if (Object.keys(this.state.dateChoice).length != 0) {
+      errDate = this.validateDateChoice(this.state.dateChoice);
+    }
+
+    if (Object.keys(this.state.location).length != 0) {
+      errLoc = this.validateLocationChoice(this.state.location);
+    }
+
+    if (Object.keys(this.state.choices).length != 0) {
+      errChc = this.validateChoice(this.state.choices);
+    }
+
+    if (errDate != '') {
+      if (errDate == 'No Date Checked') {
+        this.setState({ dateChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the date first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errDate == 'Cannot choose more than 1 Date') {
+        this.setState({ dateChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 Date.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      }
+    }
+
+    if (errCount == 0 && errLoc != '') {
+      if (errLoc == 'No Location Checked') {
+        this.setState({ locationChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the location first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errLoc == 'Cannot choose more than 1 Location') {
+        this.setState({ locationChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 Location.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      }
+    }
+
+    if (errCount == 0 && errChc != '') {
+      if (errChc == 'No Choice Checked') {
+        this.setState({ choiceChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the option first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errChc == 'Cannot choose more than 1 option') {
+        this.setState({ choiceChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 option.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      }
+    }
+
+    if (errCount == 0) {
+      this.giveVote();
+    }
+  }
+
+  giveVote = async (value) => {
+    let url = serviceUrl + '/voteresult/giveVote';
+    console.log(url)
+
+    let data = {};
+
+    data.eventId = this.state.eventId;
+    data.userId = this.state.userId;
+    data.chosenLocationNameArray = this.state.locationChecked;
+    data.chosenDateTimeArray = this.state.dateChecked;
+    data.chosenChoiceNameArray = this.state.choiceChecked;
+
+    console.log(data)
+
+    try {
+      const resp = await fetch(url, { method: 'POST', headers: new Headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(data) });
+      const respJSON = await resp.text();
+
+      if (respJSON == "SUBMIT VOTE SUCCESS") {
+        Alert.alert('Success', 'You have successfully vote for the event.', [{ text: 'Ok', onPress: () => { this.props.navigation.navigate("Main") } }]);
+      } else if (respJSON == "SUBMIT VOTE FAILED") {
+        Alert.alert('Failed', 'Failed to vote this event.', [{ text: 'Ok', onPress: () => { } }]);
+      }
+    } catch (error) {
+      Alert.alert('Failed', 'Service is not available.', [{ text: 'Ok', onPress: () => { } }]);
+      console.log(error)
+    }
+  }
+
+  validateDateChoice(datechc) {
+    var counterDate;
+
+    counterDate = this.getCountDate(datechc, 'checked');
+    // console.log("Date Checked: " + counterDate);
+
+    if (counterDate == 0) {
+      return 'No Date Checked';
+    } else if (this.state.isMultiple == 'N' && counterDate > 1) {
+      return 'Cannot choose more than 1 Date';
+    } else {
+      return 'Ok';
+    }
+  }
+
+  validateLocationChoice(loc) {
+    var counterLocation;
+
+    counterLocation = this.getCountLocation(loc, 'checked');
+    // console.log("Location Checked: " + counterLocation);
+
+    if (counterLocation == 0) {
+      return 'No Location Checked';
+    } else if (this.state.isMultiple == 'N' && counterLocation > 1) {
+      return 'Cannot choose more than 1 Location';
+    } else {
+      return 'Ok';
+    }
+  }
+
+  validateChoice(chc) {
+    var counterChoice;
+
+    counterChoice = this.getCountChoice(chc, 'checked');
+    // console.log("Choice Checked: " + counterChoice);
+
+    if (counterChoice == 0) {
+      return 'No Choice Checked';
+    } else if (this.state.isMultiple == 'N' && counterChoice > 1) {
+      return 'Cannot choose more than 1 Choice';
+    } else {
+      return 'Ok';
+    }
+  }
+
+  getCountDate(datechc, attr) {
+    let count = 0;
+    for (let i = 0; i < Object.keys(datechc).length; i++) {
+      if (datechc[i][attr] == true) {
+        count = count + 1;
+
+        let convertToDate = moment(datechc[i]['eventDate'], 'ddd, DD MMM YYYY').format('YYYY-MM-DD');
+        this.state.dateChecked.push(convertToDate);
+      }
+    }
+    return count;
+  }
+
+  getCountLocation(loc, attr) {
+    let count = 0;
+    for (let i = 0; i < Object.keys(loc).length; i++) {
+      if (loc[i][attr] == true) {
+        count = count + 1;
+
+        this.state.locationChecked.push(loc[i]['locationName']);
+      }
+    }
+    return count;
+  }
+
+  getCountChoice(chc, attr) {
+    let count = 0;
+    for (let i = 0; i < Object.keys(chc).length; i++) {
+      if (chc[i][attr] == true) {
+        count = count + 1;
+
+        this.state.choiceChecked.push(chc[i]['choice']);
+      }
+    }
+    return count;
+  }
+
   render() {
     if (this.state.loading == true) {
       return (
@@ -265,7 +540,7 @@ export default class EventDetail extends React.Component {
               </Button>
             </Left>
             <Body style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={styles.headerTitle}>Detail</Text>
+              <Text style={styles.headerTitle}>Vote</Text>
             </Body>
             <Right style={{ flex: 1 }}></Right>
           </Header>
@@ -287,7 +562,7 @@ export default class EventDetail extends React.Component {
               </Button>
             </Left>
             <Body style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={styles.headerTitle}>Detail</Text>
+              <Text style={styles.headerTitle}>Vote Result</Text>
             </Body>
             <Right style={{ flex: 1 }}></Right>
           </Header>
@@ -305,11 +580,24 @@ export default class EventDetail extends React.Component {
               </CardItem>
               <CardItem footer bordered>
                 <View style={{ flex: 0, flexDirection: 'column', alignContent: 'flex-start', justifyContent: 'flex-start' }}>
+                  <Text style={{ fontSize: 16, color: 'black' }}><Text style={{ fontWeight: 'bold' }}>{this.state.participants.length}</Text> Participants</Text>
                   <Text style={{ fontSize: 16, color: 'black' }}>Poll Closed Date: {this.state.pollClosedDate}</Text>
                   <Text style={{ fontSize: 16, color: 'black' }}>Created by <Text style={{ fontWeight: 'bold' }}>{this.state.createdBy}</Text>.</Text>
                 </View>
               </CardItem>
             </Card>
+
+            <View style={{ flex: 0 }}>
+              {this.showEventDate()}
+              {this.showEventLocation()}
+              {this.showEventQuestion()}
+
+              <View style={{ justifyContent: 'center', alignContent: 'center', alignItems: 'center', marginTop: 15 }}>
+                <Button block onPress={() => this.voteEvent()} style={{ alignContent: 'center', justifyContent: 'center', backgroundColor: '#499fcd', borderRadius: 10 }}>
+                  <Text style={{ color: 'white', fontWeight: 'bold' }}>VOTE</Text>
+                </Button>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -334,5 +622,49 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     color: 'white'
+  },
+  textInput: {
+    justifyContent: 'center',
+    color: 'black',
+    fontSize: 16,
+    marginRight: 5,
+    marginLeft: 5,
+    width: '80%',
+    paddingBottom: 5,
+    borderBottomWidth: 1,
+    borderColor: '#efefef',
+  },
+  listOfFriend: {
+    flex: 6,
+    alignItems: 'center',
+    marginTop: 5,
+    marginRight: 25,
+    borderBottomWidth: 1.5,
+    borderColor: '#efefef',
+    padding: 5,
+    paddingBottom: 10
+  },
+  friendListContainer: {
+    flex: 0,
+    alignItems: 'center',
+    marginTop: 15,
+    alignContent: 'center'
+  },
+  addBtn: {
+    backgroundColor: 'white',
+    height: '95%'
+  },
+  addParticipantBtn: {
+    margin: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    borderColor: '#499fcd',
+    backgroundColor: '#499fcd'
+  },
+  addParticipantText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 })

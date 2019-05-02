@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  StyleSheet, BackHandler, AsyncStorage, TextInput, ListView, Linking, ScrollView,
+  StyleSheet, BackHandler, AsyncStorage, TextInput, ListView, Linking, ScrollView, Alert
 } from 'react-native';
 import {
   Container, Content, Text, Spinner, Header, Left, Body, Right, Button, Icon, Title,
@@ -246,7 +246,7 @@ export default class Vote extends React.Component {
   navigate(loc) {
     var url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&dir_action=navigate&destination=' + loc;
     var encode = encodeURI(url);
-    console.log(encode);
+    // console.log(encode);
 
     Linking.canOpenURL(encode).then(supported => {
       if (!supported) {
@@ -255,6 +255,14 @@ export default class Vote extends React.Component {
         return Linking.openURL(encode)
       }
     })
+  }
+
+  multipleChc() {
+    if (this.state.isMultiple == 'N') {
+      return <View style={{ flex: 0, alignItems: 'center', marginTop: 10 }}><Text style={{ color: '#8e8e8e' }}>Choose only 1 Event Date/Event Location/Choice</Text></View>
+    } else if (this.state.isMultiple == 'Y') {
+      return <View style={{ flex: 0, alignItems: 'center', marginTop: 10 }}><Text style={{ color: '#8e8e8e' }}>You can choose more than 1 Event Date/Event Location/Choice</Text></View>
+    }
   }
 
   showEventDate() {
@@ -355,30 +363,140 @@ export default class Vote extends React.Component {
   }
 
   voteEvent() {
-    this.validateChoices(this.state.dateChoice, this.state.location, this.state.choices);
+    var errCount = 0;
+    var errDate = '';
+    var errLoc = '';
+    var errChc = '';
 
-  }
 
-  validateChoices(datechc, loc, chc) {
-    //validasi udah di checked semua atau belum
-    var counterDate;
-    var counterLocation;
-    var counterChoice;
+    this.setState({ dateChecked: [] })
+    this.setState({ locationChecked: [] })
+    this.setState({ choiceChecked: [] })
 
-    if (Object.keys(datechc).length != 0) {
-      counterDate = this.getCountDate(datechc, 'checked');
-      
-      if(this.state.isMultiple == true){
-        
+    if (Object.keys(this.state.dateChoice).length != 0) {
+      errDate = this.validateDateChoice(this.state.dateChoice);
+    }
+
+    if (Object.keys(this.state.location).length != 0) {
+      errLoc = this.validateLocationChoice(this.state.location);
+    }
+
+    if (Object.keys(this.state.choices).length != 0) {
+      errChc = this.validateChoice(this.state.choices);
+    }
+
+    if (errDate != '') {
+      if (errDate == 'No Date Checked') {
+        this.setState({ dateChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the date first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errDate == 'Cannot choose more than 1 Date') {
+        this.setState({ dateChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 Date.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
       }
     }
 
-    if (Object.keys(loc).length != 0) {
-      counterLocation = this.getCountLocation(loc, 'checked');
+    if (errCount == 0 && errLoc != '') {
+      if (errLoc == 'No Location Checked') {
+        this.setState({ locationChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the location first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errLoc == 'Cannot choose more than 1 Location') {
+        this.setState({ locationChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 Location.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      }
     }
 
-    if (Object.keys(chc).length != 0) {
-      counterChoice = this.getCountChoice(chc, 'checked');
+    if (errCount == 0 && errChc != '') {
+      if (errChc == 'No Choice Checked') {
+        this.setState({ choiceChecked: [] })
+        Alert.alert('Failed to vote', 'Choose the option first.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      } else if (errChc == 'Cannot choose more than 1 option') {
+        this.setState({ choiceChecked: [] })
+        Alert.alert('Failed to vote', 'Can`t choose more than 1 option.', [{ text: 'Ok', onPress: () => { } }]);
+        errCount = errCount + 1;
+      }
+    }
+
+    if (errCount == 0) {
+      this.giveVote();
+    }
+  }
+
+  giveVote = async (value) => {
+    let url = serviceUrl + '/voteresult/giveVote';
+    console.log(url)
+
+    let data = {};
+
+    data.eventId = this.state.eventId;
+    data.userId = this.state.userId;
+    data.chosenLocationNameArray = this.state.locationChecked;
+    data.chosenDateTimeArray = this.state.dateChecked;
+    data.chosenChoiceNameArray = this.state.choiceChecked;
+
+    // console.log(data)
+
+    try {
+      const resp = await fetch(url, { method: 'POST', headers: new Headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(data) });
+      const respJSON = await resp.text();
+
+      if (respJSON == "SUBMIT VOTE SUCCESS") {
+        Alert.alert('Success', 'You have successfully vote for the event.', [{ text: 'Ok', onPress: () => { this.props.navigation.navigate("Main") } }]);
+      } else if (respJSON == "SUBMIT VOTE FAILED") {
+        Alert.alert('Failed', 'Failed to vote this event.', [{ text: 'Ok', onPress: () => { } }]);
+      }
+    } catch (error) {
+      Alert.alert('Failed', 'Service is not available.', [{ text: 'Ok', onPress: () => { } }]);
+      console.log(error)
+    }
+  }
+
+  validateDateChoice(datechc) {
+    var counterDate;
+
+    counterDate = this.getCountDate(datechc, 'checked');
+    // console.log("Date Checked: " + counterDate);
+
+    if (counterDate == 0) {
+      return 'No Date Checked';
+    } else if (this.state.isMultiple == 'N' && counterDate > 1) {
+      return 'Cannot choose more than 1 Date';
+    } else {
+      return 'Ok';
+    }
+  }
+
+  validateLocationChoice(loc) {
+    var counterLocation;
+
+    counterLocation = this.getCountLocation(loc, 'checked');
+    // console.log("Location Checked: " + counterLocation);
+
+    if (counterLocation == 0) {
+      return 'No Location Checked';
+    } else if (this.state.isMultiple == 'N' && counterLocation > 1) {
+      return 'Cannot choose more than 1 Location';
+    } else {
+      return 'Ok';
+    }
+  }
+
+  validateChoice(chc) {
+    var counterChoice;
+
+    counterChoice = this.getCountChoice(chc, 'checked');
+    // console.log("Choice Checked: " + counterChoice);
+
+    if (counterChoice == 0) {
+      return 'No Choice Checked';
+    } else if (this.state.isMultiple == 'N' && counterChoice > 1) {
+      return 'Cannot choose more than 1 Choice';
+    } else {
+      return 'Ok';
     }
   }
 
@@ -386,12 +504,12 @@ export default class Vote extends React.Component {
     let count = 0;
     for (let i = 0; i < Object.keys(datechc).length; i++) {
       if (datechc[i][attr] == true) {
-        count = count + 1;        
-        
+        count = count + 1;
+
         let convertToDate = moment(datechc[i]['eventDate'], 'ddd, DD MMM YYYY').format('YYYY-MM-DD');
         this.state.dateChecked.push(convertToDate);
       }
-    }    
+    }
     return count;
   }
 
@@ -399,11 +517,11 @@ export default class Vote extends React.Component {
     let count = 0;
     for (let i = 0; i < Object.keys(loc).length; i++) {
       if (loc[i][attr] == true) {
-        count = count + 1;        
-        
+        count = count + 1;
+
         this.state.locationChecked.push(loc[i]['locationName']);
       }
-    }    
+    }
     return count;
   }
 
@@ -411,11 +529,11 @@ export default class Vote extends React.Component {
     let count = 0;
     for (let i = 0; i < Object.keys(chc).length; i++) {
       if (chc[i][attr] == true) {
-        count = count + 1;        
-        
+        count = count + 1;
+
         this.state.choiceChecked.push(chc[i]['choice']);
       }
-    }    
+    }
     return count;
   }
 
@@ -452,7 +570,7 @@ export default class Vote extends React.Component {
               </Button>
             </Left>
             <Body style={{ alignItems: 'center', flex: 1 }}>
-              <Text style={styles.headerTitle}>Detail</Text>
+              <Text style={styles.headerTitle}>Vote</Text>
             </Body>
             <Right style={{ flex: 1 }}></Right>
           </Header>
@@ -478,6 +596,7 @@ export default class Vote extends React.Component {
             </Card>
 
             <View style={{ flex: 0 }}>
+              {this.multipleChc()}
               {this.showEventDate()}
               {this.showEventLocation()}
               {this.showEventQuestion()}

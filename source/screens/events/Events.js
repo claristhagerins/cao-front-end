@@ -55,6 +55,7 @@ export default class Events extends React.Component {
     componentDidMount() {
         this._isMounted = true;
         if (this._isMounted == true) {
+            // AsyncStorage.removeItem('eventID');
             this.getUserId();
         }
     }
@@ -269,14 +270,21 @@ export default class Events extends React.Component {
     }
 
     cardFooter(eventId, eventName, eventDescription, pollCondition, createdBy) {
-        const detailOnly =
+        const voteOnly =
             <CardItem footer bordered style={{ flex: 2, flexDirection: 'row' }}>
                 <Button style={{ flex: 2, alignContent: 'center', justifyContent: 'center', backgroundColor: '#499fcd' }} block onPress={() => this.storeEventIdForVote(eventId)}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>VOTE</Text>
                 </Button>
             </CardItem>;
 
-        const deleteAndDetail =
+        const deleteOnly =
+            <CardItem footer bordered style={{ flex: 2, flexDirection: 'row' }}>
+                <Button style={{ borderRadius: 10, flex: 1, alignContent: 'center', justifyContent: 'center' }} block danger onPress={() => this.popupDialog(eventId, eventName, eventDescription, pollCondition)}>
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>DELETE</Text>
+                </Button>
+            </CardItem>;
+
+        const deleteAndVote =
             <CardItem footer bordered style={{ flex: 2, flexDirection: 'row' }}>
                 <Button style={{ borderRadius: 10, flex: 1, alignContent: 'center', justifyContent: 'center' }} block danger onPress={() => this.popupDialog(eventId, eventName, eventDescription, pollCondition)}>
                     <Text style={{ color: 'white', fontWeight: 'bold' }}>DELETE</Text>
@@ -287,10 +295,12 @@ export default class Events extends React.Component {
                 </Button>
             </CardItem>;
 
-        if (this.state.userName == createdBy) {
-            return deleteAndDetail;
+        if (pollCondition == 'Closed') {
+            return deleteOnly;
+        } else if (this.state.userName == createdBy) {
+            return deleteAndVote;
         } else {
-            return detailOnly;
+            return voteOnly;
         }
     }
 
@@ -368,7 +378,7 @@ export default class Events extends React.Component {
                     style={{ marginTop: 10, marginLeft: 15, marginRight: 15 }}
                     renderRow={item => (
                         <Card style={{ marginBottom: 10 }}>
-                            <CardItem button bordered onPress={() => this.props.navigation.navigate('EventDetail')}>
+                            <CardItem button bordered onPress={() => this.storeEventIdForDetails(item.eventId)}>
                                 <Body style={{ flex: 5, flexDirection: 'column' }}>
                                     {/* {this.setAvatar(item.pollCondition)} */}
                                     <Text style={{ width: '90%', fontWeight: 'bold', fontSize: 20 }}>{item.eventName}</Text>

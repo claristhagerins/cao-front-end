@@ -116,7 +116,7 @@ export default class NewEvent extends React.Component {
     if (stat == "Not a Friend") {
       return <Button onPress={() => this.addFriend(friendId, friendName)} style={{ width: '20%', backgroundColor: '#499FCD', alignItems: 'flex-end', alignItems: 'center', justifyContent: 'center', margin: 5 }}><Text style={{ color: 'white', borderWidth: 0 }}>ADD</Text></Button>;
     } else if (stat == "Friend") {
-      return <Button disabled={true} style={{ width: '20%', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', margin: 5 }}><Text style={{ color: '#499FCD', borderWidth: 0 }}>ADDED</Text></Button>;
+      return <Button disabled={true} style={{ width: '20%', backgroundColor: 'white', alignItems: 'center', justifyContent: 'center', margin: 5 }}><Text style={{ color: '#499FCD', borderWidth: 0, fontSize: 12 }}>ADDED</Text></Button>;
     }
   }
 
